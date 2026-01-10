@@ -122,6 +122,9 @@
   ;; Disable Ispell completion function. As an alternative try `cape-dict'.
   (text-mode-ispell-word-completion nil)
   (tab-always-indent 'complete)
+  (corfu-auto t)
+  (corfu-auto-delay 0.2)
+  (corfu-auto-prefix 2)
 
   ;; Enable Corfu
   :config
@@ -403,6 +406,9 @@
   :init
   (global-set-key (kbd "C-'") 'avy-goto-char-2))
 
+;; Set a custom font
+(set-face-attribute 'default nil :height 140 :weight 'normal :family "Terminess Nerd Font")
+
 (mapc #'disable-theme custom-enabled-themes)
 (use-package ef-themes
   :config (load-theme 'ef-winter t)
@@ -420,3 +426,5 @@
 
 (use-package nix-mode
   :mode "\\.nix\\'")
+
+(ffap-bindings)
