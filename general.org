@@ -1,9 +1,22 @@
-;; Native compilation enhances Emacs performance by converting Elisp code into
-;; native machine code, resulting in faster execution and improved
-;; responsiveness.
-;;
-;; Ensure adding the following compile-angel code at the very beginning
-;; of your `~/.emacs.d/post-init.el` file, before all other packages.
+#+PROPERTY: header-args:emacs-lisp :tangle general.el
+* Precompile with Compile-Angel
+Native compilation enhances Emacs performance by converting Elisp code into
+native machine code, resulting in faster execution and improved
+responsiveness.
+
+Ensure adding the following compile-angel code at the very beginning
+of your `~/.emacs.d/post-init.el` file, before all other packages.
+(after-load-theme
+  (custom-set-faces
+   '(org-block ((t (:background "#0f1a24")))))
+  (custom-set-faces
+   '(org-block-begin-line
+     ((t (:background "#0f1a24" :foreground "#6a7a8c")))))
+  (custom-set-faces
+   '(org-block-end-line
+     ((t (:background "#0f1a24" :foreground "#6a7a8c"))))))
+
+#+BEGIN_SRC emacs-lisp
 (use-package compile-angel
   :demand t
   :ensure t
@@ -34,7 +47,10 @@
   ;; `require'. Additionally, it compiles all packages that were loaded before
   ;; the mode `compile-angel-on-load-mode' was activated.
   (compile-angel-on-load-mode 1))
+#+END_SRC
 
+
+#+BEGIN_SRC emacs-lisp
 ;; Auto-revert in Emacs is a feature that automatically updates the
 ;; contents of a buffer to reflect changes made to the underlying file
 ;; on disk.
@@ -408,7 +424,7 @@
   (global-set-key (kbd "C-'") 'avy-goto-char-2))
 
 ;; Set a custom font
-(set-face-attribute 'default nil :height 120 :weight 'normal :family "Terminess Nerd Font")
+(set-face-attribute 'default nil :height 120 :weight 'normal :family "Iosevka Nerd Font Mono")
 
 (mapc #'disable-theme custom-enabled-themes)
 ;; (use-package ef-themes
@@ -438,12 +454,12 @@
   (doom-themes-enable-bold t)   ; if nil, bold is universally disabled
   (doom-themes-enable-italic t) ; if nil, italics is universally disabled
   :config
-  (load-theme 'doom-winter-is-coming-dark-blue t)
-
   ;; Enable flashing mode-line on errors
   (doom-themes-visual-bell-config)
   ;; Corrects (and improves) org-mode's native fontification.
-  (doom-themes-org-config))
+  (doom-themes-org-config)
+  (load-theme 'doom-winter-is-coming-dark-blue t))
+
 
 (use-package magit
   :ensure t)
@@ -452,3 +468,93 @@
   :ensure t
   :config
   (require 'elvish-mode))
+
+
+(use-package markdown-mode
+  :commands (gfm-mode
+             gfm-view-mode
+             markdown-mode
+             markdown-view-mode)
+  :mode (("\\.markdown\\'" . markdown-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("README\\.md\\'" . gfm-mode))
+  :bind
+  (:map markdown-mode-map
+        ("C-c C-e" . markdown-do)))
+
+
+(use-package org
+  :ensure t
+  :commands (org-mode org-version)
+  :mode
+  ("\\.org\\'" . org-mode)
+  ("\\.txt\\'" . org-mode)
+  ("\\.org_archive\\'" . org-mode)
+  :custom
+  (org-hide-leading-stars t)
+  (org-startup-indented t)
+  (org-adapt-indentation nil)
+  (org-edit-src-content-indentation 0)
+  (org-fontify-done-headline nil)
+  (org-fontify-todo-headline nil)
+  ;; (org-fontify-whole-heading-line t)
+  ;; (org-fontify-quote-and-verse-blocks t)
+  (org-startup-truncated t)
+  (org-goto-interface 'outline-path-completion)
+  (org-outline-path-complete-in-steps nil)
+  (org-goto-max-level 2))
+
+;;; Code:
+;; Some general settings
+(setq org-directory "~/org")
+(setq org-default-notes-file "~/org/refile.org")
+(defvar org-default-diary-file "~/org/diary.org")
+
+;; Display properties
+(setq org-cycle-separator-lines 0)
+(setq org-tags-column 8)
+;; (setq org-latex-prefer-user-labels t)
+
+;; Show overview when open
+;; (setq org-startup-folded t)
+
+;; Dim blocked tasks (and other settings)
+(setq org-enforce-todo-dependencies t)
+
+;; Set default column view headings: Task Effort Clock_Summary
+(setq org-columns-default-format "%50ITEM(Task) %10Effort(Effort){:} %10CLOCKSUM %16TIMESTAMP_IA")
+
+;; Allow setting single tags without the menu
+(setq org-fast-tag-selection-single-key 'expert)
+
+;; Include the todo keywords
+(setq org-fast-tag-selection-include-todo t)
+(setq org-use-fast-todo-selection t)
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "NEXT(n)" "PROJ(p)" "|" "DONE(d)")
+	    (sequence "TASK(T)")
+	    (sequence "WAITING(w@/!)" "INACTIVE(i)" "SOMEDAY(s)" "|" "CANCELLED(c@/!)")))
+;; Custom colors for the keywords
+(setq org-todo-keyword-faces
+      '(("TODO" :foreground "red" :weight bold)
+	    ("TASK" :foreground "#5C888B" :weight bold)
+	    ("NEXT" :foreground "turquoise" :weight bold)
+	    ("PROJ" :foreground "magenta" :weight bold)
+	    ("DONE" :foreground "forest green" :weight bold)
+	    ("WAITING" :foreground "orange" :weight bold)
+	    ("INACTIVE" :foreground "magenta" :weight bold)
+	    ("SOMEDAY" :foreground "cyan" :weight bold)
+	    ("CANCELLED" :foreground "forest green" :weight bold)))
+;; Auto-update tags whenever the state is changed
+(setq org-todo-state-tags-triggers
+      '(("CANCELLED" ("CANCELLED" . t))
+	    ("WAITING" ("SOMEDAY") ("INACTIVE") ("WAITING" . t))
+	    ("INACTIVE" ("WAITING") ("SOMEDAY") ("INACTIVE" . t))
+	    ("SOMEDAY" ("WAITING") ("INACTIVE") ("SOMEDAY" . t))
+	    (done ("WAITING") ("INACTIVE") ("SOMEDAY"))
+	    ("TODO" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
+	    ("TASK" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
+	    ("NEXT" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
+	    ("PROJ" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
+	    ("DONE" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))))
+#+END_SRC
